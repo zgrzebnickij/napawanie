@@ -31,6 +31,7 @@ class data_prepare:
                 return array_two_chanels
             except csv.Error as e:
                 print("Can't load",'path %s, line %d: %s' % (path, sound.line_num, e))
+                return []
 
     def open_csv_and_count(self,path,file):
         with open(path+file, 'r',newline='\n',encoding="Latin-1") as csvfile:
@@ -55,9 +56,9 @@ def saving_spectograms(sound,sr,ln,file,label):
     print("max:",np.amax(ps),"min:",np.amin(ps))
     if(ps.shape==(128,128)):
         np.save(label+"/spectogram_"+file.replace("/","_"),ps)
-        librosa.display.specshow(keras.utils.normalize(ps,axis=-1,order=2),y_axis='linear', fmax=40000,x_axis='time',cmap='gray_r')
-        plt.title('Spectrogram')
-        plt.savefig(label+"/spectogram_"+file.replace("/","_"))
+        # librosa.display.specshow(keras.utils.normalize(ps,axis=1,order=0),y_axis='mel', fmax=40000,x_axis='time',cmap='gray_r')
+        # plt.title('Spectogram')
+        # plt.savefig(label+"/spectogram_"+file.replace("/","_"))
 
 def dividing_to_make_spectograms(sound,cracks,num_of_samples,file):
     stop = num_of_samples
@@ -88,17 +89,19 @@ def dividing_to_make_spectograms(sound,cracks,num_of_samples,file):
         saving_spectograms(sound[0][int(start):int(stop)],40000,int(num_of_samples/128),file_name,label)
 
 data_opener = data_prepare()
-for folder in ['Pękanie 4']: #,'Pękanie 2','Pękanie 3','Pękanie 4'
+for folder in ['Pękanie 1','Pękanie 2','Pękanie 3','Pękanie 4']: #,'Pękanie 2','Pękanie 3','Pękanie 4'
     for folder2 in os.listdir(folder):
         cracks = np.array([])
         sound = np.array([])
         for file in os.listdir(folder+'/'+folder2):
             path_to_file = "{0}/{1}/".format(folder,folder2)
             print(path_to_file+file)
-            if("5_dźwięk.csv" in file):
+            if("_dźwięk.csv" in file):
                 sound = np.array(data_opener.open_csv_and_save_to_wav(path=path_to_file,file=file))
+                if(sound==[]):
+                    break
                 sound = sound.reshape(2,-1)
-            elif("5_pęknięcia.csv" in file):
+            elif("_pęknięcia.csv" in file):
                 cracks = np.array(data_opener.open_csv_and_count(path=path_to_file,file=file))
         if(len(sound)):
             print("Czas zrobic spektogramy")
