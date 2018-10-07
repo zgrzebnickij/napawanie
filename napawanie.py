@@ -46,6 +46,28 @@ class data_prepare:
             except csv.Error as e:
                 print("Can't load",'path %s, line %d: %s' % (path, sound.line_num, e))
 
+def dividing_to_make_spectograms(sound,cracks,num_of_samples):
+    stop = num_of_samples
+    start = 0
+    cracks=cracks*40
+    while(stop<sound.shape[1]):
+        is_crack_inside=[]
+        print(cracks)
+        is_crack_inside = [x > start and x < stop for x in cracks]
+        next_crack = [x-stop for x in cracks if x>stop]
+        if(any(is_crack_inside)):
+            print("tu jest pęknięcie",start,stop)
+            offset = 32*num_of_samples/128
+        elif(any([y<num_of_samples for y in next_crack])):
+            print("zaraz będzie")
+            offset = min(next_crack)+(num_of_samples/32)
+        else:
+            print("tu nie ma")
+            offset = num_of_samples
+        print(offset)
+        start+=offset
+        stop+=offset    
+
 data_opener = data_prepare()
 for folder in ['Pękanie 3']: #,'Pękanie 2','Pękanie 3','Pękanie 4'
     for folder2 in os.listdir(folder):
@@ -66,7 +88,9 @@ for folder in ['Pękanie 3']: #,'Pękanie 2','Pękanie 3','Pękanie 4'
             sr=40000 #Hz
             samples_for_one_col = 0.001*time_duration*sr
             samples_for_spectogram = int(samples_for_one_col*128)
+            print("spektogram będzie zawierał {0}ms nagrania".format(time_duration*128))
             print("we need {0} samples for {1} ms. spectogram 128x128 need {2}".format(samples_for_one_col,time_duration,samples_for_spectogram))
+            dividing_to_make_spectograms(sound,cracks,samples_for_spectogram)
         else:
             print("Brak dzwięku!")
 print(data_opener.number_of_cracks)
