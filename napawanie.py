@@ -6,6 +6,7 @@ import csv
 import numpy as np
 import os
 import keras
+from scipy import signal
 
 
 class data_prepare:
@@ -60,7 +61,26 @@ def saving_spectograms(sound,sr,ln,file,label):
         # plt.title('Spectogram')
         # plt.savefig(label+"/spectogram_"+file.replace("/","_"))
 
-def dividing_to_make_spectograms(sound,cracks,num_of_samples,file):
+def saving_spectograms_and_filter(sound,sr,ln,path_to_file,label,starting_point):
+    path_to_file = path_to_file+"spektogram{0}.jpg".format(starting_point)
+    b ,a = signal.butter(4,(0.23,0.8) , btype="bandpass")
+    output_signal = signal.filtfilt(b, a, sound)
+    print(output_signal.shape)
+    f, t, ps = signal.stft(output_signal, sr, nperseg=ln,noverlap=0,boundary=None)
+    t=t+starting_point
+    print("max:",np.amax(ps),"min:",np.amin(ps))
+    print(ps.shape)
+    if(ps.shape==(201,128)):
+        start_from = 40
+        plt.pcolormesh(t, f[start_from:start_from + 128], np.abs(ps[start_from:start_from + 128]),cmap='gray_r')
+        plt.title('STFT Magnitude')
+        plt.ylabel('Frequency [Hz]')
+        plt.xlabel('Time [sec]')
+        plt.savefig(path_to_file)
+        plt.close()
+        #np.save(label+"/spectogram_"+file.replace("/","_"),sr)
+
+def dividing_to_make_spectograms(sound,cracks,num_of_samples,path_to_file):
     stop = num_of_samples
     start = 0
     cracks=cracks*40
@@ -82,11 +102,10 @@ def dividing_to_make_spectograms(sound,cracks,num_of_samples,file):
             offset = num_of_samples
             label = "ok"
         print(start,stop)
-        print(offset)
+        print(offset) 
+        saving_spectograms_and_filter(sound[0][int(start):int(stop)],40000,int(num_of_samples/128),path_to_file,label,start/40000)
         start+=offset
-        stop+=offset 
-        file_name=file+str(int(start))
-        saving_spectograms(sound[0][int(start):int(stop)],40000,int(num_of_samples/128),file_name,label)
+        stop+=offset
 
 data_opener = data_prepare()
 for folder in ['Pękanie 1','Pękanie 2','Pękanie 3','Pękanie 4']: #,'Pękanie 2','Pękanie 3','Pękanie 4'
