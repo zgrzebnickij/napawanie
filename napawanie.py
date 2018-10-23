@@ -42,7 +42,7 @@ class data_prepare:
             try:
                 array = []
                 for channel in sound:
-                    for probe in channel:
+                    for probe in channel[0].split("\t"):
                         array.append(float(probe.replace(',','.')))
                         num_of_cracks+=1
                     #print(array)
@@ -62,16 +62,16 @@ def saving_spectograms(sound,sr,ln,file,label):
         # plt.title('Spectogram')
         # plt.savefig(label+"/spectogram_"+file.replace("/","_"))
 
-def saving_spectograms_02(output_signal,sr,ln,path_to_file,label,starting_point):
-    path_to_file = path_to_file+"spektogram{0}.jpg".format(starting_point)
+def saving_spectograms_02(output_signal,sr,ln,path_to_file,label,starting_point,num_of_section):
+    path_to_file = label+"/"+path_to_file.replace('/','_')+"spektogram{0}.jpg".format(starting_point)
     print(output_signal.shape)
     f, t, ps = signal.stft(output_signal, sr, nperseg=ln,noverlap=0,boundary=None)
     t=t+starting_point
     print("max:",np.amax(ps),"min:",np.amin(ps))
     print(ps.shape)
-    if(ps.shape==(201,128)):
+    if(ps.shape==(201,num_of_section)):
         start_from = 40
-        plt.pcolormesh(t, f[start_from:start_from + 128], np.abs(ps[start_from:start_from + 128]),cmap='gray_r')
+        plt.pcolormesh(t, f[start_from:start_from + num_of_section], np.abs(ps[start_from:start_from + num_of_section]),cmap='gray_r')
         plt.title('STFT Magnitude')
         plt.ylabel('Frequency [Hz]')
         plt.xlabel('Time [sec]')
@@ -79,7 +79,7 @@ def saving_spectograms_02(output_signal,sr,ln,path_to_file,label,starting_point)
         plt.close()
         #np.save(label+"/spectogram_"+file.replace("/","_"),sr)
 
-def dividing_to_make_spectograms(sound,cracks,num_of_samples,path_to_file):
+def dividing_to_make_spectograms(sound,cracks,num_of_samples,path_to_file,num_of_section):
     stop = num_of_samples
     start = 0
     cracks=cracks*40
@@ -91,7 +91,7 @@ def dividing_to_make_spectograms(sound,cracks,num_of_samples,path_to_file):
         if(any(is_crack_inside)):
             print("tu jest pęknięcie")
             label = "nok"
-            offset = 32*num_of_samples/128
+            offset = 32*num_of_samples/num_of_section
         elif(any([y<num_of_samples for y in next_crack])):
             print("zaraz będzie")
             offset = min(next_crack)+(num_of_samples/32)
@@ -102,12 +102,12 @@ def dividing_to_make_spectograms(sound,cracks,num_of_samples,path_to_file):
             label = "ok"
         print(start,stop)
         print(offset) 
-        saving_spectograms_02(sound[0][int(start):int(stop)],40000,int(num_of_samples/128),path_to_file,label,start/40000)
+        saving_spectograms_02(sound[0][int(start):int(stop)],40000,int(num_of_samples/num_of_section),path_to_file,label,start/40000,num_of_section)
         start+=offset
         stop+=offset
 
 data_opener = data_prepare()
-for folder in ['Pękanie 1','Pękanie 2','Pękanie 3','Pękanie 4']: #,'Pękanie 2','Pękanie 3','Pękanie 4'
+for folder in ['Pękanie 3','Pękanie 4']: #,'Pękanie 2','Pękanie 3','Pękanie 4'
     for folder2 in os.listdir(folder):
         cracks = np.array([])
         sound = np.array([])
@@ -119,23 +119,24 @@ for folder in ['Pękanie 1','Pękanie 2','Pękanie 3','Pękanie 4']: #,'Pękanie
                 if(sound==[]):
                     break
                 sound = sound.reshape(2,-1)
-            elif("_pęknięcia.csv" in file):
+            elif("_pęknięcia_nowe.csv" in file):
                 cracks = np.array(data_opener.open_csv_and_count(path=path_to_file,file=file))
         if(len(sound[0])):
             print("Czas zrobic spektogramy")
             print(sound.shape,cracks)
             time_duration = 10 ##ms
             sr=40000 #Hz
+            num_of_section = 128
             samples_for_one_col = int(0.001*time_duration*sr)
-            samples_for_spectogram = int(samples_for_one_col*128)
-            print("spektogram będzie zawierał {0}ms nagrania".format(time_duration*128))
-            print("we need {0} samples for {1} ms. spectogram 128x128 need {2}".format(samples_for_one_col,time_duration,samples_for_spectogram))
+            samples_for_spectogram = int(samples_for_one_col*num_of_section)
+            print("spektogram będzie zawierał {0}ms nagrania".format(time_duration*num_of_section))
+            print("we need {0} samples for {1} ms. spectogram 128x{3} need {2}".format(samples_for_one_col,time_duration,samples_for_spectogram,num_of_section))
             low = 0.23
             high = 0.8
             b ,a = signal.butter(4,(low,high) , btype="bandpass")  ## filtr pasmowo przepustowy 
             output_signal = signal.filtfilt(b, a, sound)
-            librosa.output.write_wav(path_to_file+'odszumiony{}_{}.wav'.format(low,high),np.array(output_signal[0],dtype='float'),40000,norm=True)
-            #dividing_to_make_spectograms(output_signal,cracks,samples_for_spectogram,path_to_file)
+            #librosa.output.write_wav(path_to_file+'odszumiony{}_{}.wav'.format(low,high),np.array(output_signal[0],dtype='float'),40000,norm=True)
+            dividing_to_make_spectograms(output_signal,cracks,samples_for_spectogram,path_to_file,num_of_section)
         else:
             print("Brak dzwięku!")
 print(data_opener.number_of_cracks)
