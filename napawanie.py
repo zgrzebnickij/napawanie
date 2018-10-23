@@ -5,6 +5,7 @@ import librosa.display
 import csv 
 import numpy as np
 import os
+import random
 #import keras
 from scipy import signal
 from scipy.io.wavfile import write
@@ -63,7 +64,7 @@ def saving_spectograms(sound,sr,ln,file,label):
         # plt.savefig(label+"/spectogram_"+file.replace("/","_"))
 
 def saving_spectograms_02(output_signal,sr,ln,path_to_file,label,starting_point,num_of_section):
-    path_to_file = label+"/"+path_to_file.replace('/','_')+"spektogram{0}.jpg".format(starting_point)
+    path_to_file = "32/"+label+"/"+path_to_file.replace('/','_')+"spektogram{0}_32.jpg".format(starting_point)
     print(output_signal.shape)
     f, t, ps = signal.stft(output_signal, sr, nperseg=ln,noverlap=0,boundary=None)
     t=t+starting_point
@@ -71,13 +72,15 @@ def saving_spectograms_02(output_signal,sr,ln,path_to_file,label,starting_point,
     print(ps.shape)
     if(ps.shape==(201,num_of_section)):
         start_from = 40
-        plt.pcolormesh(t, f[start_from:start_from + num_of_section], np.abs(ps[start_from:start_from + num_of_section]),cmap='gray_r')
-        plt.title('STFT Magnitude')
-        plt.ylabel('Frequency [Hz]')
-        plt.xlabel('Time [sec]')
-        plt.savefig(path_to_file)
-        plt.close()
-        #np.save(label+"/spectogram_"+file.replace("/","_"),sr)
+        # plt.pcolormesh(t, f[start_from:start_from + 128], np.abs(ps[start_from:start_from + 128]),cmap='gray_r')
+        # plt.title('STFT Magnitude')
+        # plt.ylabel('Frequency [Hz]')
+        # plt.xlabel('Time [sec]')
+        # cbar = plt.colorbar()
+        # cbar.set_label("Intensity (dB)")
+        # plt.savefig(path_to_file)
+        # plt.close()
+        np.save(path_to_file,np.abs(ps[start_from:start_from + 128]))
 
 def dividing_to_make_spectograms(sound,cracks,num_of_samples,path_to_file,num_of_section):
     stop = num_of_samples
@@ -91,10 +94,10 @@ def dividing_to_make_spectograms(sound,cracks,num_of_samples,path_to_file,num_of
         if(any(is_crack_inside)):
             print("tu jest pęknięcie")
             label = "nok"
-            offset = 32*num_of_samples/num_of_section
+            offset = 8*num_of_samples/num_of_section
         elif(any([y<num_of_samples for y in next_crack])):
             print("zaraz będzie")
-            offset = min(next_crack)+(num_of_samples/32)
+            offset = min(next_crack)+(random.randint(2,8)*num_of_samples/32)
             label = "ok"
         else:
             print("tu nie ma")
@@ -126,7 +129,7 @@ for folder in ['Pękanie 3','Pękanie 4']: #,'Pękanie 2','Pękanie 3','Pękanie
             print(sound.shape,cracks)
             time_duration = 10 ##ms
             sr=40000 #Hz
-            num_of_section = 128
+            num_of_section = 32
             samples_for_one_col = int(0.001*time_duration*sr)
             samples_for_spectogram = int(samples_for_one_col*num_of_section)
             print("spektogram będzie zawierał {0}ms nagrania".format(time_duration*num_of_section))
