@@ -64,14 +64,14 @@ def saving_spectograms(sound,sr,ln,file,label):
         # plt.savefig(label+"/spectogram_"+file.replace("/","_"))
 
 def saving_spectograms_02(output_signal,sr,ln,path_to_file,label,starting_point,num_of_section):
-    path_to_file = "32/"+label+"/"+path_to_file.replace('/','_')+"spektogram{0}_32.jpg".format(starting_point)
+    path_to_file = "128_7ms/"+label+"/"+path_to_file.replace('/','_')+"spektogram{0}_32.jpg".format(starting_point)
     print(output_signal.shape)
     f, t, ps = signal.stft(output_signal, sr, nperseg=ln,noverlap=0,boundary=None)
     t=t+starting_point
     print("max:",np.amax(ps),"min:",np.amin(ps))
     print(ps.shape)
-    if(ps.shape==(201,num_of_section)):
-        start_from = 40
+    if(ps.shape==(141,num_of_section)):
+        start_from = 13
         # plt.pcolormesh(t, f[start_from:start_from + 128], np.abs(ps[start_from:start_from + 128]),cmap='gray_r')
         # plt.title('STFT Magnitude')
         # plt.ylabel('Frequency [Hz]')
@@ -127,9 +127,9 @@ for folder in ['Pękanie 3','Pękanie 4']: #,'Pękanie 2','Pękanie 3','Pękanie
         if(len(sound[0])):
             print("Czas zrobic spektogramy")
             print(sound.shape,cracks)
-            time_duration = 10 ##ms
+            time_duration = 7 ##ms
             sr=40000 #Hz
-            num_of_section = 32
+            num_of_section = 128
             samples_for_one_col = int(0.001*time_duration*sr)
             samples_for_spectogram = int(samples_for_one_col*num_of_section)
             print("spektogram będzie zawierał {0}ms nagrania".format(time_duration*num_of_section))
