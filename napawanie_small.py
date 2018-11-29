@@ -64,23 +64,24 @@ def saving_spectograms(sound,sr,ln,file,label):
         # plt.savefig(label+"/spectogram_"+file.replace("/","_"))
 
 def saving_spectograms_02(output_signal,sr,ln,path_to_file,label,starting_point,num_of_section):
-    path_to_file = "128_7ms_2/"+label+"/"+path_to_file.replace('/','_')+"spektogram{0}_32".format(starting_point)
+    path_to_file = "32_7ms/"+label+"/"+path_to_file.replace('/','_')+"spektogram{0}_32".format(starting_point)
     print(output_signal.shape)
     f, t, ps = signal.stft(output_signal, sr, nperseg=ln,noverlap=0,boundary=None)
     t=t+starting_point
     print("max:",np.amax(ps),"min:",np.amin(ps))
     print(ps.shape)
     if(ps.shape==(141,num_of_section)):
-        start_from = 13
-        # plt.pcolormesh(t, f[start_from:start_from + 128], np.abs(ps[start_from:start_from + 128]),cmap='gray_r')
-        # plt.title('STFT Magnitude')
-        # plt.ylabel('Frequency [Hz]')
-        # plt.xlabel('Time [sec]')
-        # cbar = plt.colorbar()
-        # cbar.set_label("Intensity (dB)")
-        # plt.savefig(path_to_file)
-        # plt.close()
-        np.save(path_to_file,np.abs(ps[start_from:start_from + 128]))
+        numbers_of_fft_samples = 96
+        start_from = 25
+        plt.pcolormesh(t, f[start_from:start_from + numbers_of_fft_samples], np.abs(ps[start_from:start_from + numbers_of_fft_samples]),cmap='gray_r')
+        plt.title('STFT Magnitude')
+        plt.ylabel('Frequency [Hz]')
+        plt.xlabel('Time [sec]')
+        cbar = plt.colorbar()
+        cbar.set_label("Intensity (dB)")
+        plt.savefig(path_to_file+".jpg")
+        plt.close()
+        np.save(path_to_file,np.abs(ps[start_from:start_from + numbers_of_fft_samples]))
 
 def dividing_to_make_spectograms(sound,cracks,num_of_samples,path_to_file,num_of_section):
     stop = num_of_samples
@@ -97,7 +98,7 @@ def dividing_to_make_spectograms(sound,cracks,num_of_samples,path_to_file,num_of
             offset = 8*num_of_samples/num_of_section
         elif(any([y<num_of_samples for y in next_crack])):
             print("zaraz będzie")
-            offset = min(next_crack)+(random.randint(2,8)*num_of_samples/32)
+            offset = min(next_crack)+(random.randint(2,8)*num_of_samples/num_of_section)
             label = "ok"
         else:
             print("tu nie ma")
@@ -110,7 +111,7 @@ def dividing_to_make_spectograms(sound,cracks,num_of_samples,path_to_file,num_of
         stop+=offset
 
 data_opener = data_prepare()
-for folder in ['Pękanie 3','Pękanie 4']: #,'Pękanie 2','Pękanie 3','Pękanie 4'
+for folder in ['Pękanie 1','Pękanie 2','Pękanie 3','Pękanie 4']: #,'Pękanie 2','Pękanie 3','Pękanie 4'
     for folder2 in os.listdir(folder):
         cracks = np.array([])
         sound = np.array([])
@@ -129,7 +130,7 @@ for folder in ['Pękanie 3','Pękanie 4']: #,'Pękanie 2','Pękanie 3','Pękanie
             print(sound.shape,cracks)
             time_duration = 7 ##ms
             sr=40000 #Hz
-            num_of_section = 128
+            num_of_section = 128/4
             samples_for_one_col = int(0.001*time_duration*sr)
             samples_for_spectogram = int(samples_for_one_col*num_of_section)
             print("spektogram będzie zawierał {0}ms nagrania".format(time_duration*num_of_section))
