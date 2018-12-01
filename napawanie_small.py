@@ -9,6 +9,7 @@ import random
 #import keras
 from scipy import signal
 from scipy.io.wavfile import write
+from acoustics import generator
 
 
 class data_prepare:
@@ -63,8 +64,18 @@ def saving_spectograms(sound,sr,ln,file,label):
         # plt.title('Spectogram')
         # plt.savefig(label+"/spectogram_"+file.replace("/","_"))
 
+def noise_make(sound,numbers_of_samples,factor):
+    noise = generator.brown(numbers_of_samples)
+    noise = noise*factor
+    low = 0.23
+    high = 0.8
+    b ,a = signal.butter(4,(low,high) , btype="bandpass")  ## filtr pasmowo przepustowy 
+    output_signal = signal.filtfilt(b, a, noise)
+    output_signal += sound 
+    return output_signal
+
 def saving_spectograms_02(output_signal,sr,ln,path_to_file,label,starting_point,num_of_section):
-    path_to_file = "32_7ms/"+label+"/"+path_to_file.replace('/','_')+"spektogram{0}_32".format(starting_point)
+    path_to_file = "32_7ms_noise/"+label+"/"+path_to_file.replace('/','_')+"spektogram{0}_32".format(starting_point)
     print(output_signal.shape)
     f, t, ps = signal.stft(output_signal, sr, nperseg=ln,noverlap=0,boundary=None)
     t=t+starting_point
@@ -106,7 +117,23 @@ def dividing_to_make_spectograms(sound,cracks,num_of_samples,path_to_file,num_of
             label = "ok"
         print(start,stop)
         print(offset) 
-        saving_spectograms_02(sound[0][int(start):int(stop)],40000,int(num_of_samples/num_of_section),path_to_file,label,start/40000,num_of_section)
+        saving_spectograms_02(sound[0][int(start):int(stop)],
+                              40000,
+                              int(num_of_samples/num_of_section),
+                              path_to_file,
+                              label,
+                              start/40000,
+                              num_of_section
+                              )
+        noisy_sound = noise_make(sound[0][int(start):int(stop)],num_of_samples,0.006)
+        saving_spectograms_02(noisy_sound,
+                              40000,
+                              int(num_of_samples/num_of_section),
+                              path_to_file+"noisy",
+                              label,
+                              start/40000,
+                              num_of_section
+                              )
         start+=offset
         stop+=offset
 
