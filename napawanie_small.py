@@ -71,7 +71,7 @@ def noise_make(sound,numbers_of_samples,factor):
     high = 0.8
     b ,a = signal.butter(4,(low,high) , btype="bandpass")  ## filtr pasmowo przepustowy 
     output_signal = signal.filtfilt(b, a, noise)
-    output_signal += sound 
+    #output_signal += sound 
     return output_signal
 
 def saving_spectograms_02(output_signal,sr,ln,path_to_file,label,starting_point,num_of_section):
@@ -129,7 +129,7 @@ def dividing_to_make_spectograms(sound,cracks,num_of_samples,path_to_file,num_of
         saving_spectograms_02(noisy_sound,
                               40000,
                               int(num_of_samples/num_of_section),
-                              path_to_file+"noisy",
+                              path_to_file+"noisy___",
                               label,
                               start/40000,
                               num_of_section

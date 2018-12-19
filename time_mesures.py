@@ -10,7 +10,7 @@ from  keras.layers import Activation, Dense, Dropout, Conv2D, \
 from keras.models import Sequential
 import time
 from scipy import signal
-
+import wave
 #Policzenie czsu dla różnych wielkości okna
 
 low = 0.23
@@ -63,7 +63,9 @@ cala = []
 for j in range(124,32,-8):#range(100,132,4):#range(128,96,-4):
     wiersz = []
     for num_of_section in  range(124,32,-8):#range(36,132,8):#range(128,32,-4):
-        input_size=(j, num_of_section, 1)
+        num_of_section=128
+        j=128
+        input_size=(128,128, 1)
         try:
             model = making_model(input_size)
         except:
@@ -93,11 +95,11 @@ rows = [n for n in range(124,32,-8)]
 cols = [m for m in range(124,32,-8)]
 print(cols,rows)
 plt.pcolormesh(cols,rows,cala,shading='gouraud')
-plt.xlabel("Numbers of columns")
-plt.ylabel("Number of fft samples")
-plt.title("Time for calculating one spectrogram")
+plt.xlabel("Liczba kolumn spektrogramu")
+plt.ylabel("Ilość próbek widma")
+plt.title("Czas przygotowania i predykcji jednego spektrogramu")
 cbar = plt.colorbar()
-cbar.set_label("seconds")
+cbar.set_label("sekundy")
 plt.show()
 
 # input_size=(100,100, 1)

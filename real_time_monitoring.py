@@ -7,14 +7,24 @@ try:
     import time
     import sys
     import seaborn as sns
+    from  keras.layers import Activation, Dense, Dropout, Conv2D, \
+                         Flatten, MaxPooling2D
+    from keras.models import Sequential
+    import time
+    from scipy import signal
+    import wave
 except:
     print("Something didn't import")
+
+low = 0.23
+high = 0.8
+b ,a = signal.butter(4,(low,high) , btype="bandpass")
 
 def making_model(input_shape):
 
     model = Sequential()
 
-    model.add(Conv2D(24, (5, 5), strides=(1, 1), input_shape=input_shape))
+    model.add(Conv2D(24, (5, 5), strides=(1, 1), input_shape=(128,128,1)))
     model.add(MaxPooling2D((4, 2), strides=(4, 2)))
     model.add(Activation('relu'))
 
@@ -50,7 +60,7 @@ def Prepare_spektrogram(data,y_size,num_of_section,number_of_samples):
     normalized = normalization(np.abs(ps)  ,0.0006509951221093928,7.295001191662265e-14)[0:y_size]
     return normalized
 
-model = making_model(input_size)
+model = making_model((128,128))
 
 # Prepare the Plotting Environment with random starting values
 time_duration = 7 ##ms
@@ -59,7 +69,7 @@ num_of_section =128
 samples_for_one_col = int(0.001*time_duration*sr)
 samples_for_spektrogram = int(samples_for_one_col*num_of_section)
 
-FORMAT = pyaudio.paInt16 # We use 16bit format per sample
+FORMAT = pyaudio.paInt8 # We use 16bit format per sample
 CHANNELS = 1
 RATE = 40000
 CHUNK = samples_for_spektrogram # 1024bytes of data red from a buffer # liczba próbek potrzebna do spektogramu.
@@ -87,8 +97,8 @@ print("+---------------------------------+\n")
 # itself for new data
 while keep_going:
     try:
-        Prepare_spektrogram(stream.read(CHUNK),128,128,samples_for_spektrogram)
-        print(model.predict(spektogram.reshape(1,num_of_section,j,1)))
+        spectrogram = Prepare_spektrogram(stream.read(CHUNK),128,128,samples_for_spektrogram)
+        print(model.predict(spektrogram.reshape(1,128,128,1)))
     except KeyboardInterrupt:
         keep_going=False
     except:

@@ -12,22 +12,31 @@ from  keras.layers import Activation, Dense, Dropout, Conv2D, \
 from keras.models import Sequential
 
 D=[]
+D_ok = []
+D_nok = []
 check=[]
 label = []
-name = []
-for folder in ["128_7ms/ok","128_7ms/nok"]:
+for folder in ["32_7ms_noise/ok","32_7ms_noise/nok"]:
     i = 0
     for file in os.listdir(folder):
-        if(i>1000):
-            continue
         if(".npy" in file):
             spectogram = np.load(folder+"/"+file)
-            name.append(folder+"/"+file)
-            if spectogram.shape != (128, 128): continue
-            D.append((spectogram, folder))
-            label.append(folder)
-            check.append(spectogram) #może tu normalizować
-            i+=1
+            if spectogram.shape != (96, 32): continue
+            if(folder == "32_7ms_noise/ok"):
+                D_ok.append((spectogram, folder))
+                label.append(folder)
+                check.append(spectogram) #może tu normalizować
+                i+=1
+            else:
+                D_nok.append((spectogram, folder))
+                label.append(folder)
+                check.append(spectogram) #może tu normalizować
+                i+=1
+random.shuffle(D_ok)
+D = D_ok
+{D.append(x) for x in D_nok}
+print(len(D_nok),len(D_nok[0]))
+print(len(D_ok),len(D_ok[0]))
 print(len(D),len(D[0]),"done")
 
 def normalization(data,x_max,x_min):
@@ -70,12 +79,12 @@ print(len(D[0][0][0]))
 # y_test = encoder.transform(y_test)
 # print(y_test)
 
-#architektura 128x128
+#architektura 96x32
 model = Sequential()
-input_shape=(128, 128, 1)
+input_shape=(96, 32, 1)
 
 model.add(Conv2D(24, (5, 5), strides=(1, 1), input_shape=input_shape))
-model.add(MaxPooling2D((4, 2), strides=(4, 2)))
+model.add(MaxPooling2D((2, 2), strides=(2, 2)))
 model.add(Activation('relu'))
 
 model.add(Conv2D(48, (5, 5), padding="valid"))
@@ -88,32 +97,44 @@ model.add(Activation('relu'))
 model.add(Flatten())
 model.add(Dropout(rate=0.5))
 
-model.add(Dense(128))
+model.add(Dense(64))
 model.add(Activation('relu'))
 model.add(Dropout(rate=0.5))
 
 model.add(Dense(1, activation='sigmoid'))
 
-model.load_weights("weights-improvement_100model.hdf5")
+model.load_weights("32_7ms_noise/weights-improvement_noise.hdf5")
 
 prediction = []
 prediction_label =[]
 prediction_predicted = []
 x_dataset, y_dataset = zip(*dataset)
 for i in range(0,len(dataset)):
-    prediction.append(model.predict(x_dataset[i].reshape(1,128,128,1))[0][0])
+    prediction.append(model.predict(x_dataset[i].reshape(1,96,32,1))[0][0])
     prediction_label.append(y_dataset[i])
     prediction_predicted.append(round(prediction[i]))
 
-print(prediction)
-suma_srodkowychwartoci = 0
-for i in range(0,len(dataset)):
-    if (prediction_predicted[i]==1.0) and ("/ok" in name[i]):
-        continue
-    elif (prediction_predicted[i])==0.0 and ("/nok" in name[i]):
-        continue
-    else:
-        print(name[i],prediction[i])
-    if(0.40 < prediction[i] < 0.60):
-        suma_srodkowychwartoci+=1
-print(suma_srodkowychwartoci)
+#print(prediction)
+
+for a in [[0.4,0.6],[0.35,0.65],[0.3,0.7],[0.25,0.75]]:
+    suma_srodkowychwartoci = 0
+    good_sum = 0
+    for i in range(0,len(dataset)):
+        if (prediction_predicted[i]==1.0) and ("/ok" in y_dataset[i]):
+            if(a[0] < prediction[i] < a[1]):
+                good_sum+=1
+            continue
+        elif (prediction_predicted[i])==0.0 and ("/nok" in y_dataset[i]):
+            if(a[0] < prediction[i] < a[1]):
+                good_sum+=1
+            continue
+        if(a[0] < prediction[i] < a[1]):
+            #print("Wartość środkowa")
+            suma_srodkowychwartoci+=1
+    print(suma_srodkowychwartoci,good_sum)
+# 0.36 0.65 25 wartości
+#               B   G
+# 0.4,0.6       18 14
+# 0.35,0.65     25 21
+# 0.3,0.7       34 26
+# 0.25,0.75     44 38
